@@ -5,10 +5,6 @@ We're creating an Actions on Google module using api.ai to interact with google 
 
 
 ### Analysis
-Explain what approaches from class you will bring to bear on the project.
-
-Be explicit about the techiques from the class that you will use. For example:
-
 There will be data abstraction to various degrees throughout the entire project. All data is organized and collected in meaningful ways be it with lists, hash-tables, or structs and have proper functions to access them.
 
 The only recursion that has been added in so far is for multithreading the proccess that updates the tables containing the last stop each shuttle was at. 
