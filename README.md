@@ -44,9 +44,7 @@ The live demo for this project will more than likely actually start up the week 
 Ultimately to test the real effectiveness of this project it will have to involve it just being fully running and doing live tests. However, if we can get a test case for at least one shuttle line up and running we can get some early feedback from users and see exactly how useful this is to them and present them during the live demo. 
 
 ## Architecture Diagram
-Upload the architecture diagram you made for your slide presentation to your repository, and include it in-line here.
-
-Create several paragraphs of narrative to explain the pieces and how they interoperate.
+![arch](arch.png)
 
 ## Schedule
 
