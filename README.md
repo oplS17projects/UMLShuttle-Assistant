@@ -62,5 +62,5 @@ All documentation completed
 The parsing backend and basic groundwork for api.ai/actions on google intergration 
 
 ### Nicholas Puopolo @npuopolo
-will work on...
+Accepting and processing requests from the web server, calculating average time.
 
