@@ -82,13 +82,13 @@
   (string->url (string-append "https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&"
                               "origins=" origin
                               "&destinations=" destination
-                              "&key=AIzaSyAEgUDOGLAWMKRhlH7uz-ZtUoaPaFpHRZA")))
+                              "&key=APIKEYHERE")))
 (define (distance-waypoint origin destination waypoints)
   (string->url (string-append "https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&"
                               "origins=" origin
                               "&destinations=" destination
                               "&waypoints=" waypoints
-                              "&key=AIzaSyAEgUDOGLAWMKRhlH7uz-ZtUoaPaFpHRZA")))
+                              "&key=APIKEYHERE")))
 
 (define (test_distance destination) (url->string (distance "42.642698,-71.331370" destination)))
   
