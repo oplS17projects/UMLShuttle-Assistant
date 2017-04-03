@@ -1,0 +1,159 @@
+#lang racket
+
+(require net/url)
+(require net/url-structs)
+(require json)
+
+
+(provide routes_hash (struct-out line)(struct-out bus))
+
+(define lines    (string->url "https://www.uml.edu/api/Transportation/RoadsterRoutes/Lines/?apiKey=87C6ACB0-C2A4-460A-AAF2-9493BAA3917B"))
+(define (route_url num)  (string->url (string-append "https://www.uml.edu/api/Transportation/RoadsterRoutes/BusesOnLine/?apiKey=87C6ACB0-C2A4-460A-AAF2-9493BAA3917B&lineId="                                                     (number->string num))))
+(define test_j   "{\"isError\":false,\"message\":null,\"statusCode\":200,x\"data\":[{\"Id\":48,\"Number\":\"T157\",\"Location\":{\"Latitude\":42.6492875,\"Longitude\":-71.323405499999993},\"Heading\":135},{\"Id\":44,\"Number\":\"T107\",\"Location\":{\"Latitude\":42.6492875,\"Longitude\":-71.323405499999993},\"Heading\":135}]}")
+
+
+(struct bus   (id type location)           #:transparent ) ;; id/type = strings location is a list (lat long) 
+(struct line  (name id shuttles stops last_stop)   #:mutable  #:transparent )
+
+
+(define routes_hash
+  (let
+      ([routes (make-hash)]
+       [active_lst '()])
+ 
+    (define (active_shuttles_on line_in)
+      (foldr create-buses '() (json_in line_in)))
+
+    (define (find_line line_name linelst)
+      (filter (λ (x) (equal? (line-name x) line_name)) linelst ))
+
+    (define (json_in line_in)
+      (hash-ref (if (string? line_in)
+                    (string->jsexpr line_in)
+                    (read-json (get-pure-port line_in))) 'data))
+
+    (define (create-buses shuttle shuttle-list) ;;creates
+      (define location (hash-ref shuttle 'Location))
+      (cons (let [(numb (hash-ref shuttle 'Number))]
+              (bus 
+               numb
+               (string-ref numb 0)
+               (list
+                (hash-ref location 'Latitude)
+                (hash-ref location 'Longitude))))
+            shuttle-list ))
+    
+    (define (create_lines) ;; creates a list of lines with all active shuttles and last stop
+      (for-each
+       (λ (x)
+         (let [(shuttlelst (active_shuttles_on (route_url (car x)))) (stoplst (get_stops (car (cddr x))))]
+           (hash-set! routes
+                      (car x)
+                      (line
+                       (cadr x) ;; name
+                       (car x) ;; id     
+                       shuttlelst ;; shuttles
+                       stoplst
+                       (last_shuttle_stop shuttlelst stoplst))
+                      ) ))
+       (active_lines)))
+    
+    (define (active_lines) ;; gets a list of all the lines with ID Number, Name, and Stops
+      (map
+       (λ (x)
+         (let
+             [(id (hash-ref x 'Id))
+           (name (string-append
+                  (hash-ref x 'Name)
+                  " "
+                  (hash-ref x 'Qualifier)))]
+           
+           (set! active_lst (cons (list name id) active_lst))
+           (list
+            (hash-ref x 'Id)
+            name
+            (hash-ref x 'Stops)))) ;; add in stop locations to check against
+       (json_in lines))
+      ) ;; creates a list of active lines
+
+    (define update_lines ;; updates routes with the new info in a seperate thread every 2 minutes
+      (thread (λ () (define (loop)
+                      (hash-for-each routes
+                                     (λ (z y)
+                                       (set-line-shuttles! y (active_shuttles_on (route_url (line-id y))))
+                                       (let [(at_stop (last_shuttle_stop (line-shuttles y) (line-stops y)))]
+                                         (hash-for-each at_stop
+                                                        (λ (t v)
+                                                          (cond [(not (equal? v "nope"))
+                                                                 (hash-set! (line-last_stop y) t v)]))))))
+                      (sleep 60) (loop))
+                (loop)))) 
+    ;; stuff for stops
+    (define (get_stops line_in) ;; gets a list of stops for internal use to compare shuttle gps locations
+      (foldl                    
+       (λ (x y)
+         (cons (list (hash-ref x 'Name)
+                     (list
+                      (hash-ref (hash-ref x 'Location) 'Latitude)
+                      (hash-ref (hash-ref x 'Location) 'Longitude)
+                      )
+                     ) y))
+       '()
+       line_in)
+      )
+    (define (check_stop busgps stops) ;; check to see if the GPS is in range of the stop or not
+      (let [(check (filter
+                    (λ (x) 
+                      (gps-in-range busgps (cadr x)))
+                    stops))]
+        (if (null? check)
+            "nope"
+            (caar check))))
+      
+    (define (last_shuttle_stop shuttlelst stops) ;; hash of shuttle names to last stop
+      (define shuttle_stops (make-hash))
+      (for-each  (λ (x)
+                   (hash-set! shuttle_stops
+                              (bus-id x) (check_stop (bus-location x) stops)))
+                 shuttlelst)
+      shuttle_stops)
+
+    ;;functions for figuring out shuttle stops
+    (define (longitude gps) (cadr gps))
+    (define (latitude gps) (car gps))
+
+    (define offset .00025)
+    (define (northbound gps_pair)
+      (list (latitude gps_pair) (+ offset (longitude gps_pair))))
+    (define (southbound gps_pair)
+      (list (latitude gps_pair) (- (longitude gps_pair) offset)))
+    (define (eastbound gps_pair)
+      (list (+ offset (latitude gps_pair)) (longitude gps_pair)))
+    (define (westbound gps_pair)
+      (list (- offset (latitude gps_pair)) (longitude gps_pair)))
+
+    (define (gps-in-range gps1 gps2)
+      (let [(one gps1) (two gps2)]
+        (and (< (longitude one) (longitude (northbound two))) ;; longitude
+             (> (longitude one) (longitude (southbound two)))
+             (< (latitude one) (latitude (eastbound two)))    ;;latitude
+             (> (latitude one) (latitude (westbound two)))
+             )))
+
+    ;; DISPATCHER 
+    (define (dispatch e)
+      (cond
+        [(equal? e 'get_routes) routes ]
+        [(equal? e 'stop_updates) (thread-suspend update_lines)]
+        [(equal? e 'resume_updates) (thread-resume update_lines)]
+        [(equal? e 'active_lines) (active_lines)]
+        [(equal? e 'get_line) active_lst]
+        ))   
+    (cond
+      [(equal? routes (make-hash)) (create_lines)  dispatch]
+      [else dispatch]) ;; this condition creates the lines on initial call and then dispatch so that it can immediatly be used) 
+    ))
+
+
+
+;; ------- TEST STUFF
