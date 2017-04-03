@@ -7,7 +7,7 @@
 (require json)
 (require "shuttles.rkt")
 (require "api.ai.rkt")
-(Require “spin.rkt”)
+(require "spin.rkt")
 
 
 (define (requestJSON req) (bytes->string/utf-8 (request-post-data/raw req)))
@@ -21,17 +21,11 @@
   )
 
 (define (create_response request_string)
-  (define query_input (create_query request_string))
-  
-  (cond [(equal? (requested_line query_input) "blue_line") (blue (requested_stop query_input))]
-        [(equal? (requested_line query_input) "red_line") (red (requested_stop query_input))]
-        [(equal? (requested_line query_input) "yellow_north") (yellow_north (requested_stop query_input))]
-        [(equal? (requested_line query_input) "yellow_south") (yellow_south (requested_stop query_input))]
-        [(equal? (requested_line query_input) "yellow_east") (yellow_south (requested_stop query_input))]
-        [(equal? (requested_line query_input) "green_south") (green_south (requested_stop query_input))]
-        [(equal? (requested_line query_input) "green_north") (green_north (requested_stop query_input))]
-        [(equal? (requested_line query_input) "purple") (purple (requested_stop query_input))]))
+  (define query_input (parse_query request_string))
+  ((eval (string->symbol (requested_line query_input))) (requested_stop query_input)))
+;; Instead of matching each requested line using a cond, just evaluate the line as a symbol to get a function
 
+   
 
 (define drum_hill 0)
 (define yellow_north 0)
@@ -43,15 +37,11 @@
 
 
 (define red
-  (define blue_line (hash-ref routes_hash "Red "))
-  (define blue_shuttles (line-shuttles blue_line))
-  (define blue_stops (line-stops blue_line))
-  (define blue_last_stop (line-last_stop blue_line))
-
-  0)
+  0
+  )
   
-(define (blue stop) ;; 
-  (define blue_line (hash-ref routes_hash "Blue "))
+(define (Blue_line stop) ;; 
+  (define blue_line (hash-ref (routes_hash 'get_routes) "Blue "))
   (define blue_shuttles (line-shuttles blue_line))
   (define blue_stops (line-stops blue_line))
   (define blue_last_stop (line-last_stop blue_line))
@@ -59,19 +49,13 @@
   ;; function to match stop up to the correct one
   ;; function to convert to gps cords -> gmaps api
   ;; function to parse gmaps api -> create json post response 
-  0
+  (write "LOL")
   )
 
-
-
-
 (post "/"
-  (lambda (req) (create_response (requestJSON req))))
+      (lambda (req) (create_response (requestJSON req))))
 
-
-
-
-(run)
+(thread (λ () (run)))
 
 
 
