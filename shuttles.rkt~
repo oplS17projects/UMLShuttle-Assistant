@@ -15,7 +15,7 @@
 (struct bus   (id type location)           #:transparent ) ;; id/type = strings location is a list (lat long) 
 (struct line  (name id shuttles stops last_stop)   #:mutable  #:transparent )
 
- 
+
 (define routes_hash
   (let
       ([routes (make-hash)]
@@ -48,7 +48,7 @@
        (λ (x)
          (let [(shuttlelst (active_shuttles_on (route_url (car x)))) (stoplst (get_stops (car (cddr x))))]
            (hash-set! routes
-                      (cadr x)
+                      (car x)
                       (line
                        (cadr x) ;; name
                        (car x) ;; id     
@@ -76,12 +76,12 @@
        (json_in lines))
       ) ;; creates a list of active lines
 
-    (define update_lines ;; updates routes with the new info in a seperate thread every minutes
+    (define update_lines ;; updates routes with the new info in a seperate thread every 2 minutes
       (thread (λ () (define (loop)
                       (hash-for-each routes
                                      (λ (z y)
                                        (set-line-shuttles! y (active_shuttles_on (route_url (line-id y))))
-                                       (let [(at_stop (last_shuttle_stop (line-shuttles y) (line-stops y)))] ;
+                                       (let [(at_stop (last_shuttle_stop (line-shuttles y) (line-stops y)))]
                                          (hash-for-each at_stop
                                                         (λ (t v)
                                                           (cond [(not (equal? v "nope"))
@@ -122,7 +122,7 @@
     (define (longitude gps) (cadr gps))
     (define (latitude gps) (car gps))
 
-    (define offset .00040)
+    (define offset .00025)
     (define (northbound gps_pair)
       (list (latitude gps_pair) (+ offset (longitude gps_pair))))
     (define (southbound gps_pair)

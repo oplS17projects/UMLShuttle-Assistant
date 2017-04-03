@@ -22,18 +22,16 @@
 
 (define (create_response request_string)
   (define query_input (create_query request_string))
-  
   (cond [(equal? (requested_line query_input) "blue_line") (blue (requested_stop query_input))]
         [(equal? (requested_line query_input) "red_line") (red (requested_stop query_input))]
         [(equal? (requested_line query_input) "yellow_north") (yellow_north (requested_stop query_input))]
         [(equal? (requested_line query_input) "yellow_south") (yellow_south (requested_stop query_input))]
-        [(equal? (requested_line query_input) "yellow_east") (yellow_south (requested_stop query_input))]
         [(equal? (requested_line query_input) "green_south") (green_south (requested_stop query_input))]
         [(equal? (requested_line query_input) "green_north") (green_north (requested_stop query_input))]
         [(equal? (requested_line query_input) "purple") (purple (requested_stop query_input))]))
 
 
-(define drum_hill 0)
+(define drum_hill
 (define yellow_north 0)
 (define yellow_south 0)
 (define purple 0)
