@@ -1,5 +1,9 @@
 #lang racket
 
+
+;; TAKEN FROM https://github.com/dmac/spin/ 
+;; INCLUDED IN REPOSITORY FOR EASIER DEPLOYMENT 
+
 ; TODO
 ; * tests
 ; * look into ORMs
