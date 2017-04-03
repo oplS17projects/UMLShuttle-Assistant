@@ -1,57 +1,47 @@
-# UMLShuttle-Assistant-
+# UMLShuttle-Assistant
 
 ### Statement
-Describe your project. Why is it interesting? Why is it interesting to you personally? What do you hope to learn? 
+We're creating an Actions on Google module using api.ai to interact with google assistant/home in order to let users figure out how when the next shuttle will be at one of the stops using google maps distance API. This project is especially interesting because it's using brand new technology that has only come to market in the past year and will give us a solid groundwork to create more projects involving this technology in the future. 
+
 
 ### Analysis
 Explain what approaches from class you will bring to bear on the project.
 
 Be explicit about the techiques from the class that you will use. For example:
 
-- Will you use data abstraction? How?
-- Will you use recursion? How?
-- Will you use map/filter/reduce? How? 
-- Will you use object-orientation? How?
-- Will you use functional approaches to processing your data? How?
-- Will you use state-modification approaches? How? (If so, this should be encapsulated within objects. `set!` pretty much should only exist inside an object.)
-- Will you build an expression evaluator, like we did in the symbolic differentatior and the metacircular evaluator?
-- Will you use lazy evaluation approaches?
+There will be data abstraction to various degrees throughout the entire project. All data is organized and collected in meaningful ways be it with lists, hash-tables, or structs and have proper functions to access them.
 
-The idea here is to identify what ideas from the class you will use in carrying out your project. 
+The only recursion that has been added in so far is for multithreading the proccess that updates the tables containing the last stop each shuttle was at. 
 
-**Your project will be graded, in part, by the extent to which you adopt approaches from the course into your implementation, _and_ your discussion about this.**
+Map and for-each are used excessively throughout the parsing of the various json objects involved, and filtering is used exclusively for checking to see if shuttles are currently at a stop.
+
+There is object orientation, the shuttle backend is encapsulated in an entire object and depending on how the rest progresses there might be more.
+
+Seeing as there are objects, there are also state-modification using set! which is how all of the tables containing line/shuttle data are updated.
+
 
 ### External Technologies
-You are encouraged to develop a project that connects to external systems. For example, this includes systems that:
+This project connects to
 
-- retrieve information or publish data to the web
-- generate or process sound
-- control robots or other physical systems
-- interact with databases
+Actions on Google (Google Asstant)
+API.AI 
+api.uml.edu
 
-If your project will do anything in this category (not only the things listed above!), include this section and discuss.
+People will access the API for this module by asking Google Assistant how far away a shuttle is from whatever stop they are at. Google Assistant (on their phone) then sends their query to actions on google, which immediately sends it to API.AI which then processes it and sends a request for the data to the racket webserver. The racket webserver (this program) will then query the uml shuttle api's for their locations, query google maps api and then send the response back to API.AI which bounces it back to the end user.
 
 ### Data Sets or other Source Materials
-If you will be working with existing data, where will you get those data from? (Dowload from a website? Access in a database? Create in a simulation you will build? ...)
 
-How will you convert your data into a form usable for your project?  
-
-If you are pulling data from somewhere, actually go download it and look at it before writing the proposal. Explain in some detail what your plan is for accomplishing the necessary processing.
-
-If you are using some other starting materials, explain what they are. Basically: anything you plan to use that isn't code.
+All data is collected/taken from various https://www.uml.edu/api/Transportation/RoadsterRoutes/ endpoints 
 
 ### Deliverable and Demonstration
-Explain exactly what you'll have at the end. What will it be able to do at the live demo?
 
-What exactly will you produce at the end of the project? A piece of software, yes, but what will it do? Here are some questions to think about (and answer depending on your application).
+By the end of the project and the time of the live demo this program should be able to be interacted with fully to get information about all shuttles from 7am-7pm monday-friday without any issues as well as get average times. All data will be collected/analyzed live. 
 
-Will it run on some data, like batch mode? Will you present some analytical results of the processing? How can it be re-run on different source data?
 
-Will it be interactive? Can you show it working? This project involves a live demo, so interactivity is good.
+The live demo for this project will more than likely actually start up the week before the actual event and will just continue running indefinitely and be accessable for anyone with an android phone running marshmellow or nougat with google assitant because the entire point of this project to to help out other students.
 
 ### Evaluation of Results
-How will you know if you are successful? 
-If you include some kind of _quantitative analysis,_ that would be good.
+Ultimately to test the real effectiveness of this project it will have to involve it just being fully running and doing live tests. However, if we can get a test case for at least one shuttle line up and running we can get some early feedback from users and see exactly how useful this is to them and present them during the live demo. 
 
 ## Architecture Diagram
 Upload the architecture diagram you made for your slide presentation to your repository, and include it in-line here.
@@ -59,43 +49,24 @@ Upload the architecture diagram you made for your slide presentation to your rep
 Create several paragraphs of narrative to explain the pieces and how they interoperate.
 
 ## Schedule
-Explain how you will go from proposal to finished product. 
-
-There are three deliverable milestones to explicitly define, below.
-
-The nature of deliverables depend on your project, but may include things like processed data ready for import, core algorithms implemented, interface design prototyped, etc. 
-
-You will be expected to turn in code, documentation, and data (as appropriate) at each of these stages.
-
-Write concrete steps for your schedule to move from concept to working system. 
 
 ### First Milestone (Sun Apr 9)
-Which portion of the work will be completed (and committed to Github) by this day? 
+The backend involving the parsing of lines (already 99% completed)
+Basic interactivty with at least one shuttle line 
 
 ### Second Milestone (Sun Apr 16)
-Which portion of the work will be completed (and committed to Github) by this day?  
+The rest of the lines should be completed by this date seeing as they will more or less follow the same patterns/issues of one line. 
+Documentation should be mostly completed
 
 ### Public Presentation (Mon Apr 24, Wed Apr 26, or Fri Apr 28 [your date to be determined later])
-What additionally will be completed before the public presentation?
+Adding in asking for average time and what time they should leave their current location to get to a stop.
+All documentation completed 
 
 ## Group Responsibilities
-Here each group member gets a section where they, as an individual, detail what they are responsible for in this project. Each group member writes their own Responsibility section. Include the milestones and final deliverable.
 
-Please use Github properly: each individual must make the edits to this file representing their own section of work.
+### Tavis Sivat @sivat394
+The parsing backend and basic groundwork for api.ai/actions on google intergration 
 
-**Additional instructions for teams of three:** 
-* Remember that you must have prior written permission to work in groups of three (specifically, an approved `FP3` team declaration submission).
-* The team must nominate a lead. This person is primarily responsible for code integration. This work may be shared, but the team lead has default responsibility.
-* The team lead has full partner implementation responsibilities also.
-* Identify who is team lead.
-
-In the headings below, replace the silly names and GitHub handles with your actual ones.
-
-### Susan Scheme @susanscheme
-will write the....
-
-### Leonard Lambda @lennylambda
+### Nicholas Puopolo @npuopolo
 will work on...
 
-### Frank Funktions @frankiefunk 
-Frank is team lead. Additionally, Frank will work on...   
