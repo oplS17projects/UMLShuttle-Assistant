@@ -5,7 +5,7 @@
 (require json)
 
 
-(provide routes_hash (struct-out line)(struct-out bus))
+(provide routes_hash (struct-out line)(struct-out bus) latitude longitude gps-in-range)
 
 (define lines    (string->url "https://www.uml.edu/api/Transportation/RoadsterRoutes/Lines/?apiKey=87C6ACB0-C2A4-460A-AAF2-9493BAA3917B"))
 (define (route_url num)  (string->url (string-append "https://www.uml.edu/api/Transportation/RoadsterRoutes/BusesOnLine/?apiKey=87C6ACB0-C2A4-460A-AAF2-9493BAA3917B&lineId="                                                     (number->string num))))
@@ -15,7 +15,31 @@
 (struct bus   (id type location)           #:transparent ) ;; id/type = strings location is a list (lat long) 
 (struct line  (name id shuttles stops last_stop)   #:mutable  #:transparent )
 
- 
+
+;; GPS STUFF
+
+  (define (longitude gps) (cadr gps))
+    (define (latitude gps) (car gps))
+
+    (define offset .00040)
+    (define (northbound gps_pair)
+      (list (latitude gps_pair) (+ offset (longitude gps_pair))))
+    (define (southbound gps_pair)
+      (list (latitude gps_pair) (- (longitude gps_pair) offset)))
+    (define (eastbound gps_pair)
+      (list (+ offset (latitude gps_pair)) (longitude gps_pair)))
+    (define (westbound gps_pair)
+      (list (- offset (latitude gps_pair)) (longitude gps_pair)))
+
+  (define (gps-in-range gps1 gps2)
+      (let [(one gps1) (two gps2)]
+        (and (< (longitude one) (longitude (northbound two))) ;; longitude
+             (> (longitude one) (longitude (southbound two)))
+             (< (latitude one) (latitude (eastbound two)))    ;;latitude
+             (> (latitude one) (latitude (westbound two)))
+             )))
+
+
 (define routes_hash
   (let
       ([routes (make-hash)]
@@ -119,26 +143,8 @@
       shuttle_stops)
 
     ;;functions for figuring out shuttle stops
-    (define (longitude gps) (cadr gps))
-    (define (latitude gps) (car gps))
+  
 
-    (define offset .00040)
-    (define (northbound gps_pair)
-      (list (latitude gps_pair) (+ offset (longitude gps_pair))))
-    (define (southbound gps_pair)
-      (list (latitude gps_pair) (- (longitude gps_pair) offset)))
-    (define (eastbound gps_pair)
-      (list (+ offset (latitude gps_pair)) (longitude gps_pair)))
-    (define (westbound gps_pair)
-      (list (- offset (latitude gps_pair)) (longitude gps_pair)))
-
-    (define (gps-in-range gps1 gps2)
-      (let [(one gps1) (two gps2)]
-        (and (< (longitude one) (longitude (northbound two))) ;; longitude
-             (> (longitude one) (longitude (southbound two)))
-             (< (latitude one) (latitude (eastbound two)))    ;;latitude
-             (> (latitude one) (latitude (westbound two)))
-             )))
 
     ;; DISPATCHER 
     (define (dispatch e)
@@ -156,4 +162,11 @@
 
 
 
+
+
+
+
 ;; ------- TEST STUFF
+
+
+
