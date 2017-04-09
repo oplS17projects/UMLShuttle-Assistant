@@ -33,38 +33,76 @@
 (define purple       0)
 (define green_south  0)
 (define green_north  0)
+(define green_east   0)
 (define red_line     0)
 
-(define (Blue_line stop) ;; 
-  (define blue_line (hash-ref (routes_hash 'get_routes) "Blue "))
+
+(define blue-test (hash
+ "Blue "
+ (line
+  "Blue "
+  1
+  (list
+   (bus "NRT 10" #\N '(42.6433511 -71.3062238))
+   (bus "NRT 09" #\N '(42.6559767410684 -71.32473349571217)))
+  '(("South - Wilder" (42.643473 -71.333985))
+     ("South-Broadway St "
+      (42.64064028574872 -71.33751713182983))
+   ("South-Broadway St "
+    (42.64064028574872 -71.33751713182983))
+    ("North Campus"
+     (42.6559767410684 -71.32473349571217))
+    ("University Crossing"
+     (42.64936974740417 -71.32332180489351))
+    )
+  '#hash(("NRT 10" . "South-Broadway St")
+         ("NRT 09" . "North Campus")
+         ("NRT 11" . "University Crossing")))
+  ))
+ 
+(define (Blue_line) ;; 
+  (define blue_line (hash-ref blue-test "Blue "))
   (define blue_shuttles (line-shuttles blue_line))
   (define blue_stops (line-stops blue_line))
   (define blue_last_stop (line-last_stop blue_line))
 
-  ;; use (eval stop) at the very bottom
- 
+
   ;; check the shuttles vs stops to make sure there isn't one currently at a stop
   ;; after checking to make sure there isn't one currently there it will then
   ;; go about filtering the last stop list for any shuttle that is on it's way to the requested stop
   
-  (define North  (stop_check (42.6559767410684 -71.32473349571217)  blue_shuttles))
-  (define South  (stop_check (42.643473 -71.333985)                 blue_shuttles))
-  (define Ucrossing (stop_check (42.64936974740417 -71.32332180489351) blue_shuttles))
-  (define Riverview (stop_check (42.64064028574872 -71.33751713182983) blue_shuttles))
+  (define (North)  (if (not (equal? '() (stop_check '(42.6559767410684 -71.32473349571217)  blue_shuttles)))
+                       (write "a shuttle is currently there")
+                     (write "lol nah bruv");;check shuttle list here
+                     ))
+
+
+  
+  (define (South)  (stop_check '(42.643473 -71.333985)                 blue_shuttles))
+  (define (Ucrossing) (stop_check '(42.64936974740417 -71.32332180489351) blue_shuttles))
+  (define (Riverview) (stop_check '(42.64064028574872 -71.33751713182983) blue_shuttles))
     
  
   ;; function to match stop up to the correct one
   ;; function to convert to gps cords -> gmaps api
   ;; function to parse gmaps api -> create json post response 
-  (write "LOL")
-  ;; (eval stop)
+  
+  (define (dispatch e)
+    (cond
+      [(equal? e "North") (North)]
+      [(equal? e "South")  (South)]
+      [(equal? e "Ucrossing") (Ucrossing)]
+      [(equal? e "Riverview") (Riverview)]
+      [else "lol what"]))
+  dispatch 
+  
   )
 
 (define (stop_check stop shuttles) ;; stop is a pair of gps coords
     (filter
      (λ (x) 
-       (gps-in-range stop shuttles)
-     shuttles)))
+       (gps-in-range stop (bus-location x)))
+     shuttles))
 
 
 (post "/"
