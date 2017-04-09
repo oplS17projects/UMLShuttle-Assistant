@@ -5,7 +5,9 @@
 (require json)
 
 
-(provide routes_hash (struct-out line)(struct-out bus) latitude longitude gps-in-range)
+(provide routes_hash shuttle-search
+         (struct-out line)(struct-out bus)
+         latitude longitude gps-in-range)
 
 (define lines    (string->url "https://www.uml.edu/api/Transportation/RoadsterRoutes/Lines/?apiKey=87C6ACB0-C2A4-460A-AAF2-9493BAA3917B"))
 (define (route_url num)  (string->url (string-append "https://www.uml.edu/api/Transportation/RoadsterRoutes/BusesOnLine/?apiKey=87C6ACB0-C2A4-460A-AAF2-9493BAA3917B&lineId="                                                     (number->string num))))
@@ -18,26 +20,26 @@
 
 ;; GPS STUFF
 
-  (define (longitude gps) (cadr gps))
-    (define (latitude gps) (car gps))
+(define (longitude gps) (cadr gps))
+(define (latitude gps) (car gps))
 
-    (define offset .00040)
-    (define (northbound gps_pair)
-      (list (latitude gps_pair) (+ offset (longitude gps_pair))))
-    (define (southbound gps_pair)
-      (list (latitude gps_pair) (- (longitude gps_pair) offset)))
-    (define (eastbound gps_pair)
-      (list (+ offset (latitude gps_pair)) (longitude gps_pair)))
-    (define (westbound gps_pair)
-      (list (- offset (latitude gps_pair)) (longitude gps_pair)))
+(define offset .00040)
+(define (northbound gps_pair)
+  (list (latitude gps_pair) (+ offset (longitude gps_pair))))
+(define (southbound gps_pair)
+  (list (latitude gps_pair) (- (longitude gps_pair) offset)))
+(define (eastbound gps_pair)
+  (list (+ offset (latitude gps_pair)) (longitude gps_pair)))
+(define (westbound gps_pair)
+  (list (- offset (latitude gps_pair)) (longitude gps_pair)))
 
-  (define (gps-in-range gps1 gps2)
-      (let [(one gps1) (two gps2)]
-        (and (< (longitude one) (longitude (northbound two))) ;; longitude
-             (> (longitude one) (longitude (southbound two)))
-             (< (latitude one) (latitude (eastbound two)))    ;;latitude
-             (> (latitude one) (latitude (westbound two)))
-             )))
+(define (gps-in-range gps1 gps2)
+  (let [(one gps1) (two gps2)]
+    (and (< (longitude one) (longitude (northbound two))) ;; longitude
+         (> (longitude one) (longitude (southbound two)))
+         (< (latitude one) (latitude (eastbound two)))    ;;latitude
+         (> (latitude one) (latitude (westbound two)))
+         )))
 
 
 (define routes_hash
@@ -46,7 +48,7 @@
        [active_lst '()])
  
     (define (active_shuttles_on line_in)
-      (foldr create-buses '() (json_in line_in)))
+      (foldl create-buses '() (json_in line_in)))
 
     (define (find_line line_name linelst)
       (filter (λ (x) (equal? (line-name x) line_name)) linelst ))
@@ -87,10 +89,10 @@
        (λ (x)
          (let
              [(id (hash-ref x 'Id))
-           (name (string-append
-                  (hash-ref x 'Name)
-                  " "
-                  (hash-ref x 'Qualifier)))]
+              (name (string-append
+                     (hash-ref x 'Name)
+                     " "
+                     (hash-ref x 'Qualifier)))]
            
            (set! active_lst (cons (list name id) active_lst))
            (list
@@ -138,7 +140,7 @@
       (define shuttle_stops (make-hash))
       (for-each  (λ (x)
                    (hash-set! shuttle_stops
-                              (bus-id x) (check_stop (bus-location x) stops)))
+                              (check_stop (bus-location x) stops) (bus-id x)))
                  shuttlelst)
       shuttle_stops)
 
@@ -162,8 +164,13 @@
 
 
 
-
-
+(define (shuttle-search shuttlelst shuttle_id)
+  (remove 0  (foldl (λ (x y)
+                      (cons (cond
+                              [(equal? (bus-id x) shuttle_id) x]
+                              [else 0]) ;; add in 0 for buses that don't match
+                            y )) '() shuttlelst)
+          ))
 
 
 ;; ------- TEST STUFF

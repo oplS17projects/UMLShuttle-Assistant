@@ -44,7 +44,7 @@
   1
   (list
    (bus "NRT 10" #\N '(42.6433511 -71.3062238))
-   (bus "NRT 09" #\N '(42.6559767410684 -71.32473349571217)))
+   (bus "NRT 09" #\N '(42.643473 -71.333985)))
   '(("South - Wilder" (42.643473 -71.333985))
      ("South-Broadway St "
       (42.64064028574872 -71.33751713182983))
@@ -55,9 +55,9 @@
     ("University Crossing"
      (42.64936974740417 -71.32332180489351))
     )
-  '#hash(("NRT 10" . "South-Broadway St")
-         ("NRT 09" . "North Campus")
-         ("NRT 11" . "University Crossing")))
+  '#hash(("South-Broadway St" . "NRT 10" )
+         ("North Campus" . "NRT 09")
+         ("University Crossing" . "NRT 11")))
   ))
  
 (define (Blue_line) ;; 
@@ -71,14 +71,18 @@
   ;; after checking to make sure there isn't one currently there it will then
   ;; go about filtering the last stop list for any shuttle that is on it's way to the requested stop
   
-  (define (North)  (if (not (equal? '() (stop_check '(42.6559767410684 -71.32473349571217)  blue_shuttles)))
-                       (write "a shuttle is currently there")
-                     (write "lol nah bruv");;check shuttle list here
-                     ))
-
+  (define (North)    (if (not (equal? '() (stop_check '(42.6559767410684 -71.32473349571217)  blue_shuttles)))
+                         (write "a shuttle is currently there")
+                         (if (hash-has-key? blue_last_stop "South-Broadway St") ;;check shuttle list here
+                             (shuttle-search blue_shuttles (hash-ref blue_last_stop "South-Broadway St"))
+                             (write "lol no")
+                             )))
+  ;; shuttle-search gets a list of all shuttles that have left the stop selected
+  ;; use map to get the distance for each one and then select the shortest distance to report back to to the user
+  
 
   
-  (define (South)  (stop_check '(42.643473 -71.333985)                 blue_shuttles))
+  (define (South)     (stop_check '(42.643473 -71.333985)                 blue_shuttles))
   (define (Ucrossing) (stop_check '(42.64936974740417 -71.32332180489351) blue_shuttles))
   (define (Riverview) (stop_check '(42.64064028574872 -71.33751713182983) blue_shuttles))
     
