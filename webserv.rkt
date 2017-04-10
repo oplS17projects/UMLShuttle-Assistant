@@ -75,12 +75,16 @@
   (define (North)    (if (not (equal? '() (stop_check '(42.6559767410684 -71.32473349571217)  blue_shuttles)))
                          (write "a shuttle is currently there")
                          ;;hash-map (λ (key value) ... ) check value for Riverview/South, add the key to the list
-                         (remove 0 (hash-map blue_last_stop (λ (x y)
-                                                              (cond
-                                                                [(equal? y "South-Broadway St") x]
-                                                                [else 0]))
-                                             ))))
-  ;; shuttle-search gets a list of all shuttles that have left the stop selected
+                         ;; I dunno why I need to remove 0 twice, but if there's only 1 shuttle that left riverview
+                         ;; it comes up as (shuttle 0) but two comes up as (shuttle shuttle)
+                         (riverview (remove 0(remove 0 (hash-map blue_last_stop (λ (x y)
+                                                                       (cond
+                                                                         [(equal? y "South-Broadway St") x]
+                                                                         [else 0]))
+                                                      ))))
+                              
+                          
+    ))   ;; shuttle-search gets a list of all shuttles that have left the stop selected
   ;; use map to get the distance for each one and then select the shortest distance to report back to to the user
   
 
