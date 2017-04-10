@@ -140,7 +140,7 @@
       (define shuttle_stops (make-hash))
       (for-each  (λ (x)
                    (hash-set! shuttle_stops
-                              (check_stop (bus-location x) stops) (bus-id x)))
+                              (bus-id x) (check_stop (bus-location x) stops)))
                  shuttlelst)
       shuttle_stops)
 
@@ -165,12 +165,13 @@
 
 
 (define (shuttle-search shuttlelst shuttle_id)
-  (remove 0  (foldl (λ (x y)
+  (remove 0 (foldl (λ (x y)
                       (cons (cond
                               [(equal? (bus-id x) shuttle_id) x]
                               [else 0]) ;; add in 0 for buses that don't match
                             y )) '() shuttlelst)
           ))
+
 
 
 ;; ------- TEST STUFF

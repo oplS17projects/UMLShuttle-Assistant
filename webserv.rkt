@@ -37,28 +37,29 @@
 (define red_line     0)
 
 
-(define blue-test (hash
- "Blue "
- (line
-  "Blue "
-  1
-  (list
-   (bus "NRT 10" #\N '(42.6433511 -71.3062238))
-   (bus "NRT 09" #\N '(42.643473 -71.333985)))
-  '(("South - Wilder" (42.643473 -71.333985))
-     ("South-Broadway St "
-      (42.64064028574872 -71.33751713182983))
-   ("South-Broadway St "
-    (42.64064028574872 -71.33751713182983))
-    ("North Campus"
-     (42.6559767410684 -71.32473349571217))
-    ("University Crossing"
-     (42.64936974740417 -71.32332180489351))
-    )
-  '#hash(("South-Broadway St" . "NRT 10" )
-         ("North Campus" . "NRT 09")
-         ("University Crossing" . "NRT 11")))
-  ))
+(define blue-test
+  (hash
+   "Blue "
+   (line
+    "Blue "
+    1
+    (list
+     (bus "NRT 10" #\N '(42.6433511 -71.3062238))
+     (bus "NRT 09" #\N '(42.643473 -71.333985)))
+    '(("South - Wilder" (42.643473 -71.333985))
+      ("South-Broadway St "
+       (42.64064028574872 -71.33751713182983))
+      ("South-Broadway St "
+       (42.64064028574872 -71.33751713182983))
+      ("North Campus"
+       (42.6559767410684 -71.32473349571217))
+      ("University Crossing"
+       (42.64936974740417 -71.32332180489351))
+      )
+    '#hash(("NRT 10" . "South-Broadway St" )
+           ("NRT 09" . "North Campus")
+           ("NRT 11" . "South-Broadway St")))
+   ))
  
 (define (Blue_line) ;; 
   (define blue_line (hash-ref blue-test "Blue "))
@@ -73,10 +74,12 @@
   
   (define (North)    (if (not (equal? '() (stop_check '(42.6559767410684 -71.32473349571217)  blue_shuttles)))
                          (write "a shuttle is currently there")
-                         (if (hash-has-key? blue_last_stop "South-Broadway St") ;;check shuttle list here
-                             (shuttle-search blue_shuttles (hash-ref blue_last_stop "South-Broadway St"))
-                             (write "lol no")
-                             )))
+                         ;;hash-map (λ (key value) ... ) check value for Riverview/South, add the key to the list
+                         (remove 0 (hash-map blue_last_stop (λ (x y)
+                                                              (cond
+                                                                [(equal? y "South-Broadway St") x]
+                                                                [else 0]))
+                                             ))))
   ;; shuttle-search gets a list of all shuttles that have left the stop selected
   ;; use map to get the distance for each one and then select the shortest distance to report back to to the user
   
@@ -103,14 +106,16 @@
   )
 
 (define (stop_check stop shuttles) ;; stop is a pair of gps coords
-    (filter
-     (λ (x) 
-       (gps-in-range stop (bus-location x)))
-     shuttles))
+  (filter
+   (λ (x) 
+     (gps-in-range stop (bus-location x)))
+   shuttles))
 
 
 (post "/"
       (lambda (req) (create_response (requestJSON req))))
+
+
 
 (define runner (thread (λ () (run))))
 
