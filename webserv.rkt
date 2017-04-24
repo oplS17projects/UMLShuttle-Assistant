@@ -43,24 +43,32 @@
    (line
     "Blue "
     1
-    (list
-     (bus "NRT 10" #\N '(42.6433511 -71.3062238))
-     (bus "NRT 09" #\N '(42.643473 -71.333985)))
-    '(("South - Wilder" (42.643473 -71.333985))
-      ("South-Broadway St "
-       (42.64064028574872 -71.33751713182983))
-      ("South-Broadway St "
-       (42.64064028574872 -71.33751713182983))
-      ("North Campus"
-       (42.6559767410684 -71.32473349571217))
-      ("University Crossing"
-       (42.64936974740417 -71.32332180489351))
+    (hash
+      "T105"
+           (bus "T105" #\T '(42.6500153 -71.3246993) "University Crossing")
+       "T101"
+          (bus "T101" #\T '(42.6434546 -71.333917) "South - Wilder"))  
+      '(("South - Wilder" (42.643473 -71.333985))
+        ("South-Broadway St "
+        (42.64064028574872 -71.33751713182983))
+        ("South-Broadway St "
+        (42.64064028574872 -71.33751713182983))
+        ("North Campus"
+        (42.6559767410684 -71.32473349571217))
+        ("University Crossing"
+        (42.64936974740417 -71.32332180489351))
       )
-    '#hash(("NRT 10" . "South-Broadway St" )
-           ("NRT 09" . "North Campus")
-           ("NRT 11" . "South-Broadway St")))
-   ))
- 
+    )
+   )
+  )
+
+
+(define (Build_response bus time)
+  "{ \"speech\": \"SPEECH HERE.\", \"displayText\": \" DISPLAY TEXT HERE \", \"data\": {}, \"contextOut\": [], \"source\": \"Google Maps\" }"
+  )
+
+
+
 (define (Blue_line) ;; 
   (define blue_line (hash-ref blue-test "Blue "))
   (define blue_shuttles (line-shuttles blue_line))
@@ -74,42 +82,45 @@
   
   (define (North)    (if (not (equal? '() (stop_check '(42.6559767410684 -71.32473349571217)  blue_shuttles)))
                          (write "a shuttle is currently there")
-                         ;;hash-map (λ (key value) ... ) check value for Riverview/South, add the key to the list
+                         ;; hash-map (λ (key value) ... ) check value for Riverview/South, add the key to the list
                          ;; I dunno why I need to remove 0 twice, but if there's only 1 shuttle that left riverview
                          ;; it comes up as (shuttle 0) but two comes up as (shuttle shuttle)
-                         (riverview (remove 0(remove 0 (hash-map blue_last_stop (λ (x y)
-                                                                       (cond
-                                                                         [(equal? y "South-Broadway St") x]
-                                                                         [else 0]))
-                                                      ))))
+                         (filter (λ (x) (not (null? x)))  (hash-map blue_last_stop (λ (x y) ;; Use map on this list to get a list of distances
+                                                                                     (cond  ;; then pick the shortest distance and use that to report back to the user
+                                                                                       [(equal? y "South-Broadway St") x]
+                                                                                       [(equal? y "South - Wilder") x]
+                                                                                       [else null]))
+                                                                    ))))
                               
                           
-    ))   ;; shuttle-search gets a list of all shuttles that have left the stop selected
-  ;; use map to get the distance for each one and then select the shortest distance to report back to to the user
+     ;; shuttle-search gets a list of all shuttles that have left the stop selected
+;; use map to get the distance for each one and then select the shortest distance to report back to to the user
   
 
   
-  (define (South)     (stop_check '(42.643473 -71.333985)                 blue_shuttles))
-  (define (Ucrossing) (stop_check '(42.64936974740417 -71.32332180489351) blue_shuttles))
-  (define (Riverview) (stop_check '(42.64064028574872 -71.33751713182983) blue_shuttles))
+(define (South)     (stop_check '(42.643473 -71.333985)                 blue_shuttles))
+(define (Ucrossing) (stop_check '(42.64936974740417 -71.32332180489351) blue_shuttles))
+(define (Riverview) (stop_check '(42.64064028574872 -71.33751713182983) blue_shuttles))
     
  
-  ;; function to match stop up to the correct one
-  ;; function to convert to gps cords -> gmaps api
-  ;; function to parse gmaps api -> create json post response 
+;; function to match stop up to the correct one
+;; function to convert to gps cords -> gmaps api
+;; function to parse gmaps api -> create json post response 
   
-  (define (dispatch e)
-    (cond
-      [(equal? e "North") (North)]
-      [(equal? e "South")  (South)]
-      [(equal? e "Ucrossing") (Ucrossing)]
-      [(equal? e "Riverview") (Riverview)]
-      [else "lol what"]))
-  dispatch 
+(define (dispatch e)
+  (cond
+    [(equal? e "North") (North)]
+    [(equal? e "South")  (South)]
+    [(equal? e "Ucrossing") (Ucrossing)]
+    [(equal? e "Riverview") (Riverview)]
+    [else "lol what"]))
+dispatch 
   
-  )
+)
 
 (define (stop_check stop shuttles) ;; stop is a pair of gps coords
+  ;;shuttle list is now a hash filter doesn't work
+  ;;fuck
   (filter
    (λ (x) 
      (gps-in-range stop (bus-location x)))
@@ -119,6 +130,26 @@
 (post "/"
       (lambda (req) (create_response (requestJSON req))))
 
+
+
+;;--- THIS CODE HERE IS TAKEN FROM SPIN'S EXAMPLE ---
+
+;(define (json-response-maker status headers body)
+;  (response status
+;            (status->message status)
+;            (current-seconds)
+;            #"application/json;"
+;            headers
+;            (let ([jsexpr-body (string->jsexpr body)])
+;              (lambda (op) (write-json (force jsexpr-body) op)))))
+
+;(define (json-get path handler)
+;  (define-handler "POST" path handler json-response-maker))
+
+;(json-post "/json" (lambda (req) 
+;                    "{\"body\":\"JSON GET\"}"))  ;; NEEDS TO BE A STRING
+
+;;--- END OF SLIGHTLY COPIED CODE 
 
 
 (define runner (thread (λ () (run))))

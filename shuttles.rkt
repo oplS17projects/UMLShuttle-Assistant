@@ -5,7 +5,7 @@
 (require json)
 
 
-(provide routes_hash shuttle-search
+(provide routes_hash 
          (struct-out line)(struct-out bus)
          latitude longitude gps-in-range)
 
@@ -14,8 +14,8 @@
 (define test_j   "{\"isError\":false,\"message\":null,\"statusCode\":200,x\"data\":[{\"Id\":48,\"Number\":\"T157\",\"Location\":{\"Latitude\":42.6492875,\"Longitude\":-71.323405499999993},\"Heading\":135},{\"Id\":44,\"Number\":\"T107\",\"Location\":{\"Latitude\":42.6492875,\"Longitude\":-71.323405499999993},\"Heading\":135}]}")
 
 
-(struct bus   (id type location)           #:transparent ) ;; id/type = strings location is a list (lat long) 
-(struct line  (name id shuttles stops last_stop)   #:mutable  #:transparent )
+(struct bus   (id type location last_stop)  #:mutable  #:transparent ) ;; id/type = strings location is a list (lat long) 
+(struct line  (name id shuttles stops)   #:mutable  #:transparent )
 
 
 ;; GPS STUFF
@@ -42,14 +42,32 @@
          )))
 
 
+
 (define routes_hash
   (let
       ([routes (make-hash)]
        [active_lst '()])
- 
-    (define (active_shuttles_on line_in)
-      (foldl create-buses '() (json_in line_in)))
 
+    (define (update-buses old-shuttles new-shuttles last_stops)
+      (hash-for-each old-shuttles
+                     (λ (x y)
+                       (let [(nsh (hash-ref new-shuttles (bus-id y)))]
+                         (set-bus-location! y (bus-location nsh))
+                         (cond
+                           [(not (equal? "nope" (hash-ref last_stops (bus-id y))))
+                            (set-bus-last_stop! y (hash-ref last_stops (bus-id y)))]
+                           )              
+                         ))
+                     old-shuttles)
+      )
+
+    (define (active_shuttles_on line_in)
+      (define shuttles (make-hash))
+      (for-each  (λ (x)
+                   (hash-set! shuttles
+                              (bus-id x) x))   
+                 (foldl create-buses '() (json_in line_in)))
+      shuttles)
     (define (find_line line_name linelst)
       (filter (λ (x) (equal? (line-name x) line_name)) linelst ))
 
@@ -59,15 +77,17 @@
                     (read-json (get-pure-port line_in))) 'data))
 
     (define (create-buses shuttle shuttle-list) ;;creates
-      (define location (hash-ref shuttle 'Location))
-      (cons (let [(numb (hash-ref shuttle 'Number))]
+      (cons (let [(location (hash-ref shuttle 'Location))
+                  (numb (hash-ref shuttle 'Number))]
               (bus 
                numb
                (string-ref numb 0)
                (list
                 (hash-ref location 'Latitude)
-                (hash-ref location 'Longitude))))
+                (hash-ref location 'Longitude))
+               "nope")) ;;nope is for last stop
             shuttle-list ))
+    
     
     (define (create_lines) ;; creates a list of lines with all active shuttles and last stop
       (for-each
@@ -80,8 +100,7 @@
                        (car x) ;; id     
                        shuttlelst ;; shuttles
                        stoplst
-                       (last_shuttle_stop shuttlelst stoplst))
-                      ) ))
+                       ) )))
        (active_lines)))
     
     (define (active_lines) ;; gets a list of all the lines with ID Number, Name, and Stops
@@ -102,18 +121,7 @@
        (json_in lines))
       ) ;; creates a list of active lines
 
-    (define update_lines ;; updates routes with the new info in a seperate thread every minutes
-      (thread (λ () (define (loop)
-                      (hash-for-each routes
-                                     (λ (z y)
-                                       (set-line-shuttles! y (active_shuttles_on (route_url (line-id y))))
-                                       (let [(at_stop (last_shuttle_stop (line-shuttles y) (line-stops y)))] ;
-                                         (hash-for-each at_stop
-                                                        (λ (t v)
-                                                          (cond [(not (equal? v "nope"))
-                                                                 (hash-set! (line-last_stop y) t v)]))))))
-                      (sleep 60) (loop))
-                (loop)))) 
+   
     ;; stuff for stops
     (define (get_stops line_in) ;; gets a list of stops for internal use to compare shuttle gps locations
       (foldl                    
@@ -138,15 +146,27 @@
       
     (define (last_shuttle_stop shuttlelst stops) ;; hash of shuttle names to last stop
       (define shuttle_stops (make-hash))
-      (for-each  (λ (x)
-                   (hash-set! shuttle_stops
-                              (bus-id x) (check_stop (bus-location x) stops)))
-                 shuttlelst)
+      (hash-for-each shuttlelst (λ (x y)
+                                  (hash-set! shuttle_stops
+                                             (bus-id y) (check_stop (bus-location y) stops)))
+                     )
       shuttle_stops)
 
     ;;functions for figuring out shuttle stops
   
-
+    (define update_lines ;; updates routes with the new info in a seperate thread every minute
+      (thread (λ () (define (loop)
+                      
+                      (hash-for-each routes
+                                     (λ (z y);; z = line name ; y = line strut
+                                       ;; use line ID to get the active shuttles
+                                       (let* [(shuttle_update (active_shuttles_on (route_url (line-id y))))
+                                              (at_stop (last_shuttle_stop shuttle_update (line-stops y)))]
+                                         
+                                         (update-buses (line-shuttles y) shuttle_update at_stop))))
+                                        
+                      (sleep 30) (loop))
+                (loop)))) 
 
     ;; DISPATCHER 
     (define (dispatch e)
@@ -164,13 +184,8 @@
 
 
 
-(define (shuttle-search shuttlelst shuttle_id)
-  (remove 0 (foldl (λ (x y)
-                      (cons (cond
-                              [(equal? (bus-id x) shuttle_id) x]
-                              [else 0]) ;; add in 0 for buses that don't match
-                            y )) '() shuttlelst)
-          ))
+
+
 
 
 
