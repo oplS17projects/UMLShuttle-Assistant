@@ -48,13 +48,13 @@
       ([routes (make-hash)]
        [active_lst '()])
 
-    (define (update-buses old-shuttles new-shuttles last_stops)
+    (define (update-buses old-shuttles new-shuttles last_stops) ;; if the shuttle is no longer in the new shuttle list make sure to remove it
       (hash-for-each old-shuttles
                      (λ (x y)
                        (let [(nsh (hash-ref new-shuttles (bus-id y)))]
                          (set-bus-location! y (bus-location nsh))
                          (cond
-                           [(not (equal? "nope" (hash-ref last_stops (bus-id y))))
+                           [(not (equal? "nope" (hash-ref last_stops (bus-id y)))) 
                             (set-bus-last_stop! y (hash-ref last_stops (bus-id y)))]
                            )              
                          ))

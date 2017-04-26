@@ -4,9 +4,6 @@
 ;; TAKEN FROM https://github.com/dmac/spin/ 
 ;; INCLUDED IN REPOSITORY FOR EASIER DEPLOYMENT 
 
-; TODO
-; * tests
-; * look into ORMs
 
 (require web-server/servlet
          web-server/servlet-env
@@ -32,7 +29,7 @@
   (response/full status
                  (status->message status)
                  (current-seconds)
-                 TEXT/HTML-MIME-TYPE
+                 #"application/json;"
                  headers
                  (list (string->bytes/utf-8 body))))
 
