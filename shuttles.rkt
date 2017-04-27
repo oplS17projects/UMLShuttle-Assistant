@@ -165,7 +165,7 @@
                                          
                                          (update-buses (line-shuttles y) shuttle_update at_stop))))
                                         
-                      (sleep 30) (loop))
+                      (sleep 25) (loop))
                 (loop)))) 
 
     ;; DISPATCHER 

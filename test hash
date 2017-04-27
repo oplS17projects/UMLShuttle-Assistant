@@ -1,0 +1,98 @@
+(hash
+ "Green North"
+ (line
+  "Green North"
+  3
+  (hash "T102" (bus "T102" #\T '(42.6558551 -71.3248311) "North Campus"))
+  '(("North Campus" (42.6559767410684 -71.32473349571217))
+    ("East Meadows Lane Apts." (42.656922 -71.337254))))
+ "Red Day Service"
+ (line
+  "Red Day Service"
+  11
+  (hash
+   "NRT 14"
+   (bus "NRT 14" #\N '(42.6388893 -71.324784) "nope")
+   "NRT 12"
+   (bus "NRT 12" #\N '(42.6512196 -71.3231418) "nope")
+   "NRT 16"
+   (bus "NRT 16" #\N '(42.6492641 -71.3233493) "University Crossing")
+   "NRT 13"
+   (bus "NRT 13" #\N '(42.640985 -71.3252116) "nope"))
+  '(("South - Wilder" (42.643473 -71.333985))
+    ("University Crossing" (42.64936974740417 -71.32332180489351))
+    ("Fox Hall" (42.65246507383046 -71.32075744907377))))
+ "Yellow South"
+ (line
+  "Yellow South"
+  7
+  (hash
+   "T106"
+   (bus "T106" #\T '(42.6433131 -71.3338763) "South - Wilder")
+   "M08"
+   (bus "M08" #\M '(42.6391471 -71.3166161) "nope")
+   "NRT 04"
+   (bus "NRT 04" #\N '(42.639801 -71.3149911) "nope"))
+  '(("South - Wilder" (42.643473 -71.333985))
+    ("Inn & Conference Center" (42.643541 -71.30655))))
+"Blue "
+ (line
+  "Blue "
+  1
+  (hash
+   "NRT 09"
+   (bus "NRT 09" #\N '(42.6558216 -71.3248916) "North Campus")
+   "NRT 15"
+   (bus "NRT 15" #\N '(42.6477663 -71.3281331) "nope")
+   "NRT 10"
+   (bus "NRT 10" #\N '(42.6459226 -71.3222101) "nope")
+   "NRT 17"
+   (bus "NRT 17" #\N '(42.6407181 -71.3374875) "South-Broadway St "))
+  '(("University Crossing" (42.64936974740417 -71.32332180489351))
+    ("North Campus" (42.6559767410684 -71.32473349571217))
+    ("South-Broadway St " (42.64064028574872 -71.33751713182983))
+    ("South - Wilder" (42.643473 -71.333985))))
+ "Green South"
+ (line
+  "Green South"
+  4
+  (hash
+   "M07"
+   (bus "M07" #\M '(42.6547718 -71.338715) "nope")
+   "M06"
+   (bus "M06" #\M '(42.6422701 -71.3315241) "nope"))
+  '(("South - Wilder" (42.643473 -71.333985))
+    ("East Meadows Lane Apts." (42.656922 -71.337254))))
+ "Yellow North"
+ (line
+  "Yellow North"
+  6
+  (hash
+   "NRT 11"
+   (bus "NRT 11" #\N '(42.6547423 -71.3261888) "nope")
+   "NRT 02"
+   (bus "NRT 02" #\N '(42.6428406 -71.3061725) "nope"))
+  '(("University Crossing" (42.64936974740417 -71.32332180489351))
+    ("Moody/Aiken" (42.64950962557591 -71.31996408548412))
+    ("North Campus" (42.6559767410684 -71.32473349571217))
+    ("Inn & Conference Center" (42.643541 -71.30655))
+    ("Merrimack Street" (42.6457243500201 -71.31037420635988))))
+ "Purple "
+ (line
+  "Purple "
+  10
+  (hash
+   "T101"
+   (bus "T101" #\T '(42.649098 -71.3125215) "nope")
+   "M10"
+   (bus "M10" #\M '(42.655907 -71.3245166) "nope")
+   "T103"
+   (bus "T103" #\T '(42.6512551 -71.3231391) "nope")
+   "M02"
+   (bus "M02" #\M '(42.6557786 -71.3246165) "nope")
+   "M09"
+   (bus "M09" #\M '(42.6529478 -71.3259125) "nope"))
+  '(("North Campus" (42.6559767410684 -71.32473349571217))
+    ("University Suites - Aiken Street" (42.65215008938755 -71.31781453187716))
+    ("Wannalancit Mills" (42.649127 -71.315977))
+    ("Tsongas Center" (42.649498 -71.313163)))))

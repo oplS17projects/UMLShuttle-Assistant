@@ -4,7 +4,7 @@
 (require net/url-structs)
 (require json)
 
-(provide parse_query requested_line requested_stop)
+(provide parse_query test_query requested_line requested_stop)
 
 ;; ---------- API.AI STUFF
 

@@ -10,7 +10,7 @@
          "api.ai.rkt"
          "spin.rkt")
 
-(provide requestJSON (struct-out bus) routes_hash blue-test Blue_line duration distance-waypoint gps->string) 
+(provide requestJSON (struct-out bus) create_response test_query routes_hash blue-test Blue_line duration distance-waypoint gps->string) 
 
 (define (requestJSON req) (bytes->string/utf-8 (request-post-data/raw req)))
 
@@ -21,12 +21,17 @@
                                 "lol not json"
                                 ))
 
-(define (create_response request_string) "lol")
-  ;(define query_input (parse_query request_string))
-  ;((eval (string->symbol (requested_line query_input))) (requested_stop query_input)))
-;; Instead of matching each requested line using a cond, just evaluate the line as a symbol to get a function
-;; extremely lazy
-;; extremely unsafe when interfaced with the internet and will ultimately get changed for full deployment (Hopefully) 
+(define test_query "{\r\n  \"id\": \"036a07cf-fe90-4286-a8f0-0ca784e66d9e\",\r\n  \"timestamp\": \"2017-03-30T01:57:53.935Z\",\r\n  \"lang\": \"en\",\r\n  \"result\": {\r\n    \"source\": \"agent\",\r\n    \"resolvedQuery\": \"How far away is the blue line from south?\",\r\n    \"action\": \"blue_line\",\r\n    \"actionIncomplete\": false,\r\n    \"parameters\": {\r\n      \"destination\": {\r\n        \"line\": \"Blue_line\",\r\n        \"bus_stops\": \"North\"\r\n      },\r\n      \"time_until\": \"how far away is\"\r\n    },\r\n    \"contexts\": [],\r\n    \"metadata\": {\r\n      \"intentId\": \"4c2adb65-e68f-4915-92be-549a5693fc43\",\r\n      \"webhookUsed\": \"false\",\r\n      \"webhookForSlotFillingUsed\": \"false\",\r\n      \"intentName\": \"Blue Line\"\r\n    },\r\n    \"fulfillment\": {\r\n      \"speech\": \"You are from north.\",\r\n      \"messages\": [\r\n        {\r\n          \"type\": 0,\r\n          \"speech\": \"You are from north.\"\r\n        }\r\n      ]\r\n    },\r\n    \"score\": 1\r\n  },\r\n  \"status\": {\r\n    \"code\": 200,\r\n    \"errorType\": \"success\"\r\n  },\r\n  \"sessionId\": \"ef2685f9-3a53-46d0-9952-c74a5f1c34ce\"\r\n}")
+
+(define (create_response request_string)
+   (define query_input (parse_query request_string))
+   (cond [(equal? (requested_line query_input) "Blue_line") ((Blue_line) (requested_stop query_input))]
+         [(equal? (requested_line query_input) "red_line")  (red_line (requested_stop query_input))]
+         [(equal? (requested_line query_input) "yellow_north")  (yellow_north (requested_stop query_input))]
+         [(equal? (requested_line query_input) "yellow_south")  (yellow_south (requested_stop query_input))]
+         [(equal? (requested_line query_input) "purple") (purple (requested_stop query_input))]
+         ))
+
 
 (define drum_hill    0)
 (define yellow_north 0)
@@ -61,19 +66,17 @@
   )
 
 
-(define (Build_response bus time)
-  "{ \"speech\": \"SPEECH HERE.\", \"displayText\": \" DISPLAY TEXT HERE \", \"data\": {}, \"contextOut\": [], \"source\": \"Google Maps\" }"
+(define (Build_response bus trav_time)
+(string-append 
+  "{ \"speech\": \"The shuttle " bus " is currently " trav_time " away\" , \"displayText\": \"The shuttle " bus " is currently " trav_time " away\", \"data\": {}, \"contextOut\": [], \"source\": \"Google Maps\" }" )
   )
-
-
+  
 
 (define (Blue_line) ;; 
-  (define blue_line (hash-ref blue-test "Blue "))
+  (define blue_line (hash-ref (routes_hash 'get_routes) "Blue "))
   (define blue_shuttles (line-shuttles blue_line))
   (define blue_stops (line-stops blue_line))
   
-
-
   ;; check the shuttles vs stops to make sure there isn't one currently at a stop
   ;; after checking to make sure there isn't one currently there it will then
   ;; go about filtering the last stop list for any shuttle that is on it's way to the requested stop
@@ -85,17 +88,16 @@
                             [(equal? (bus-last_stop y) "South - Broadway St")
                           ;check to see if the shuttle's gps is to the east of the waypoint, if not then use waypoint
                               (if (<  (latitude (bus-location y)) -71.327028)
-                                (distance-waypoint (gps->string (bus-location y)) "42.6559767410684,-71.32473349571217" "42.638522,-71.327028")
-                                  (distance (gps->string (bus-location y)) "42.6559767410684,-71.32473349571217"))] ;report back shuttle time
+                               (Build_response (bus-id y)  (duration(distance-waypoint (gps->string (bus-location y)) "42.6559767410684,-71.32473349571217" "42.638522,-71.327028")))
+                                 (Build_response (bus-id y) (duration (distance (gps->string (bus-location y)) "42.6559767410684,-71.32473349571217"))))
+                                 ] ;report back shuttle time
                              [(equal? (bus-last_stop y) "South - Wilder")
-                              (distance-waypoint "42.640755,-71.337500" "42.6559767410684,-71.32473349571217" "42.638522,-71.327028") ] ;; use time taken from riverview -> North and report that back
+                              (Build_response (bus-id y) (duration (distance-waypoint "42.640755,-71.337500" "42.6559767410684,-71.32473349571217" "42.638522,-71.327028"))) ] ;; use time taken from riverview -> North and report that back
                              [else null]))
                         ))))
                        
 ;; shuttle-search gets a list of all shuttles that have left the stop selected
 ;; use map to get the distance for each one and then select the shortest distance to report back to to the user
-  
-
   
 (define (South)     (if (not (equal? '() (stop_check '(42.643473 -71.333985)  blue_shuttles)))
                         (write "a shuttle is currently there") 
@@ -103,10 +105,10 @@
                           (cond  ;; then pick the shortest distance and use that to report back to the user
                            [(equal? (bus-last_stop y) "University Crossing")
                              (if (>  (latitude (bus-location y)) -71.327028)
-                                 (distance-waypoint "42.640755,-71.337500" "42.6559767410684,-71.32473349571217" "42.638522,-71.327028") ;; Middlesex waypoint
-                                  (distance-waypoint "42.640755,-71.337500" "42.6559767410684,-71.32473349571217" "42.645632,-71.333838"))] ;pawtucket waypoint
-                            [(equal? (bus-last_stop y) "North Campus") (distance-waypoint (gps->string (bus-location y) "42.643473,-71.333985" "42.649418,-71.323339|via:42.638522,-71.327028")) ] ;; use time taken from riverview -> North and report that back
-                            [else null]))))))
+                                 (distance-waypoint (gps->string (bus-location y))  "42.6559767410684,-71.32473349571217" "42.638522,-71.327028") ;; Middlesex waypoint
+                                  (distance-waypoint (gps->string (bus-location y))  "42.6559767410684,-71.32473349571217" "42.645632,-71.333838"))] ;pawtucket waypoint
+                            [(equal? (bus-last_stop y) "North Campus") (distance-waypoint (gps->string (bus-location y)) "42.643473,-71.333985" "42.649418,-71.323339|via:42.638522,-71.327028") ] ;; use time taken from riverview -> North and report that back
+                            [else null])))))) 
 
 (define (Riverview) (if (not (equal? '() (stop_check '(42.64064028574872 -71.33751713182983) blue_shuttles)))
                         (write "a shuttle is currently there")
@@ -117,11 +119,6 @@
                             [else null])))))                                                
 )
     
- 
-;; function to match stop up to the correct one
-;; function to convert to gps cords -> gmaps api
-;; function to parse gmaps api -> create json post response 
-  
 (define (dispatch e)
   (cond
     [(equal? e "North") (North)]
@@ -133,7 +130,8 @@ dispatch
   
 )
 
-(define (stop_check stop shuttles) ;; stop is a pair of gps coords
+(define (stop_check stop shuttles) 
+ 1;; stop is a pair of gps coords
   ;;shuttle list is now a hash filter doesn't work ;; the fix is to get the hash-values which is a list*
   (filter
    (λ (x) 
@@ -166,7 +164,7 @@ dispatch
 ;;--- END OF SLIGHTLY COPIED CODE 
 
 
-(define runner (thread (λ () (run))))
+(define runner (thread (λ () (run #:port 8080  #:listen-ip #f))))
 
 
 
@@ -192,7 +190,7 @@ dispatch
 
 (define (duration line_in) (hash-ref 
                             (hash-ref (car (hash-ref (car (hash-ref 
-                            (read-json (get-pure-port (car line_in))) 
+                            (read-json (get-pure-port line_in)) 
                             'routes)) 
                             'legs)) 
                             'duration_in_traffic) 
