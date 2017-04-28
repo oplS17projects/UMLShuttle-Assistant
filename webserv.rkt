@@ -135,7 +135,7 @@ dispatch )
 )
  
 (define (Blue_line) ;; 
-  (define blue_line (hash-ref blue-test  "Blue "))
+  (define blue_line (hash-ref (routes_hash 'get_routes)  "Blue "))
   (define blue_shuttles (line-shuttles blue_line))
   (define blue_stops (line-stops blue_line))
   
