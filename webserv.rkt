@@ -6,6 +6,7 @@
          web-server/servlet
          web-server/templates
          json
+         openssl
          "shuttles.rkt"
          "api.ai.rkt"
          "spin.rkt")
@@ -21,12 +22,12 @@
                                 "lol not json"
                                 ))
 
-(define test_query "{\r\n  \"id\": \"036a07cf-fe90-4286-a8f0-0ca784e66d9e\",\r\n  \"timestamp\": \"2017-03-30T01:57:53.935Z\",\r\n  \"lang\": \"en\",\r\n  \"result\": {\r\n    \"source\": \"agent\",\r\n    \"resolvedQuery\": \"How far away is the blue line from south?\",\r\n    \"action\": \"blue_line\",\r\n    \"actionIncomplete\": false,\r\n    \"parameters\": {\r\n      \"destination\": {\r\n        \"line\": \"Blue_line\",\r\n        \"bus_stops\": \"North\"\r\n      },\r\n      \"time_until\": \"how far away is\"\r\n    },\r\n    \"contexts\": [],\r\n    \"metadata\": {\r\n      \"intentId\": \"4c2adb65-e68f-4915-92be-549a5693fc43\",\r\n      \"webhookUsed\": \"false\",\r\n      \"webhookForSlotFillingUsed\": \"false\",\r\n      \"intentName\": \"Blue Line\"\r\n    },\r\n    \"fulfillment\": {\r\n      \"speech\": \"You are from north.\",\r\n      \"messages\": [\r\n        {\r\n          \"type\": 0,\r\n          \"speech\": \"You are from north.\"\r\n        }\r\n      ]\r\n    },\r\n    \"score\": 1\r\n  },\r\n  \"status\": {\r\n    \"code\": 200,\r\n    \"errorType\": \"success\"\r\n  },\r\n  \"sessionId\": \"ef2685f9-3a53-46d0-9952-c74a5f1c34ce\"\r\n}")
+(define test_query "{\r\n  \"id\": \"036a07cf-fe90-4286-a8f0-0ca784e66d9e\",\r\n  \"timestamp\": \"2017-03-30T01:57:53.935Z\",\r\n  \"lang\": \"en\",\r\n  \"result\": {\r\n    \"source\": \"agent\",\r\n    \"resolvedQuery\": \"How far away is the blue line from south?\",\r\n    \"action\": \"blue_line\",\r\n    \"actionIncomplete\": false,\r\n    \"parameters\": {\r\n      \"destination\": {\r\n        \"line\": \"red_line\",\r\n        \"bus_stops\": \"South\"\r\n      },\r\n      \"time_until\": \"how far away is\"\r\n    },\r\n    \"contexts\": [],\r\n    \"metadata\": {\r\n      \"intentId\": \"4c2adb65-e68f-4915-92be-549a5693fc43\",\r\n      \"webhookUsed\": \"false\",\r\n      \"webhookForSlotFillingUsed\": \"false\",\r\n      \"intentName\": \"Blue Line\"\r\n    },\r\n    \"fulfillment\": {\r\n      \"speech\": \"You are from north.\",\r\n      \"messages\": [\r\n        {\r\n          \"type\": 0,\r\n          \"speech\": \"You are from north.\"\r\n        }\r\n      ]\r\n    },\r\n    \"score\": 1\r\n  },\r\n  \"status\": {\r\n    \"code\": 200,\r\n    \"errorType\": \"success\"\r\n  },\r\n  \"sessionId\": \"ef2685f9-3a53-46d0-9952-c74a5f1c34ce\"\r\n}")
 
 (define (create_response request_string)
    (define query_input (parse_query request_string))
-   (cond [(equal? (requested_line query_input) "Blue_line") ((Blue_line) (requested_stop query_input))]
-         [(equal? (requested_line query_input) "red_line")  (red_line (requested_stop query_input))]
+   (cond [(equal? (requested_line query_input) "blue_line")  (car ((Blue_line) (requested_stop query_input)))]
+         [(equal? (requested_line query_input) "red_line")  (car ((red_line) (requested_stop query_input)))]
          [(equal? (requested_line query_input) "yellow_north")  (yellow_north (requested_stop query_input))]
          [(equal? (requested_line query_input) "yellow_south")  (yellow_south (requested_stop query_input))]
          [(equal? (requested_line query_input) "purple") (purple (requested_stop query_input))]
@@ -37,7 +38,36 @@
 (define yellow_north 0)
 (define yellow_south 0)
 (define purple       0)
-(define red_line     0)
+
+(define (red_line)    
+
+;;make sure to check for shuttle type when determining travel time; anything with type M can go over the pawtucket st bridge
+  (define red_line (hash-ref (routes_hash 'get_routes) "Red "))
+  (define red_shuttles (line-shuttles red_line))
+  (define red_stops (line-stops red_line))
+  
+  (define (East) 0)
+  (define (South)     
+      (if (not (equal? '() (stop_check '(42.643473 -71.333985)  red_shuttles)))
+                        (list currently_at_stop )
+                        (filter-not null? (hash-map red_shuttles (λ (x y) ;; Use map on this list to get a list of distances
+                          (cond  ;; then pick the shortest distance and use that to report back to the user
+                           [(equal? (bus-last_stop y) "University Crossing")
+                             (if (>  (latitude (bus-location y)) -71.327028)
+                              (Build_response (bus-id y)   (distance-waypoint (gps->string (bus-location y))  "42.6559767410684,-71.32473349571217" "42.638522,-71.327028")) ;; Middlesex waypoint
+                              (Build_response (bus-id y) (duration (distance-waypoint (gps->string (bus-location y))  "42.6559767410684,-71.32473349571217" "42.645632,-71.333838"))))] ;pawtucket waypoint
+                            [(equal? (bus-last_stop y) "Fox Hall")
+                             (Build_response (bus-id y) (duration (distance-waypoint (gps->string (bus-location y)) "42.65246507383046,-71.32075744907377" "42.649418,-71.323339|via:42.638522,-71.327028"))) ] ;; use time taken from riverview -> North and report that back
+                            [else null])))))) 
+  (define (Riverview) 0)
+
+ (define (dispatch e)
+  (cond
+    [(equal? e "East") (East)]
+    [(equal? e "South")  (South)]
+    [(equal? e "Riverview") (Riverview)]
+    [else "lol what"]))
+dispatch )
 
 
 (define blue-test
@@ -68,12 +98,20 @@
 
 (define (Build_response bus trav_time)
 (string-append 
-  "{ \"speech\": \"The shuttle " bus " is currently " trav_time " away\" , \"displayText\": \"The shuttle " bus " is currently " trav_time " away\", \"data\": {}, \"contextOut\": [], \"source\": \"Google Maps\" }" )
+  "{ \"speech\": \"The shuttle " bus " is at least " trav_time " away\" , \"displayText\": \"The shuttle " bus " is at least " trav_time " away\", \"data\": {}, \"contextOut\": [], \"source\": \"Google Maps\" }" )
   )
+
+ (define currently_at_stop 
+  "{ \"speech\": \"The shuttle is currently already there\" , \"displayText\": \"The shuttle is currently already there\", \"data\": {}, \"contextOut\": [], \"source\": \"Google Maps\" }" )
+
+(define riverview_almost_there
+ "{ \"speech\": \"The shuttle is currently at South, it should be at riverview soon.\" , \"displayText\": \"The shuttle is currently at South, it should be at riverview soon.\", \"data\": {}, \"contextOut\": [], \"source\": \"Google Maps\" }" 
+)
+ 
   
 
 (define (Blue_line) ;; 
-  (define blue_line (hash-ref (routes_hash 'get_routes) "Blue "))
+  (define blue_line (hash-ref blue-test  "Blue "))
   (define blue_shuttles (line-shuttles blue_line))
   (define blue_stops (line-stops blue_line))
   
@@ -82,7 +120,7 @@
   ;; go about filtering the last stop list for any shuttle that is on it's way to the requested stop
   
   (define (North)    (if (not (equal? '() (stop_check '(42.6559767410684 -71.32473349571217)  blue_shuttles)))
-                        (write "a shuttle is currently there")
+                        (list currently_at_stop )
                         (filter-not null? (hash-map blue_shuttles (λ (x y) ;; Use map on this list to get a list of distances
                          (cond  ;; then pick the shortest distance and use that to report back to the user
                             [(equal? (bus-last_stop y) "South - Broadway St")
@@ -100,22 +138,26 @@
 ;; use map to get the distance for each one and then select the shortest distance to report back to to the user
   
 (define (South)     (if (not (equal? '() (stop_check '(42.643473 -71.333985)  blue_shuttles)))
-                        (write "a shuttle is currently there") 
+                        (list currently_at_stop )
                         (filter-not null? (hash-map blue_shuttles (λ (x y) ;; Use map on this list to get a list of distances
                           (cond  ;; then pick the shortest distance and use that to report back to the user
                            [(equal? (bus-last_stop y) "University Crossing")
                              (if (>  (latitude (bus-location y)) -71.327028)
-                                 (distance-waypoint (gps->string (bus-location y))  "42.6559767410684,-71.32473349571217" "42.638522,-71.327028") ;; Middlesex waypoint
-                                  (distance-waypoint (gps->string (bus-location y))  "42.6559767410684,-71.32473349571217" "42.645632,-71.333838"))] ;pawtucket waypoint
-                            [(equal? (bus-last_stop y) "North Campus") (distance-waypoint (gps->string (bus-location y)) "42.643473,-71.333985" "42.649418,-71.323339|via:42.638522,-71.327028") ] ;; use time taken from riverview -> North and report that back
+                                (Build_response (bus-id y) (duration (distance-waypoint (gps->string (bus-location y))  "42.6559767410684,-71.32473349571217" "42.638522,-71.327028"))) ;; Middlesex waypoint
+                                  (Build_response (bus-id y) (duration (distance-waypoint (gps->string (bus-location y))  "42.6559767410684,-71.32473349571217" "42.645632,-71.333838"))))] ;pawtucket waypoint
+                            [(equal? (bus-last_stop y) "North Campus") (duration (distance-waypoint (Build_response (bus-id y) (gps->string (bus-location y)) "42.643473,-71.333985" "42.649418,-71.323339|via:42.638522,-71.327028")) )] ;; use time taken from riverview -> North and report that back
                             [else null])))))) 
 
 (define (Riverview) (if (not (equal? '() (stop_check '(42.64064028574872 -71.33751713182983) blue_shuttles)))
-                        (write "a shuttle is currently there")
+                        (list currently_at_stop)
                         (filter-not null? (hash-map blue_shuttles (λ (x y) ;; Use map on this list to get a list of distances
                          (cond  ;; then pick the shortest distance and use that to report back to the user
-                           [(equal? (bus-last_stop y) "North Campus")] ;report back shuttle time
-                           [(equal? (bus-last_stop y) "South - Wilder") ]
+                          [(equal? (bus-last_stop y) "University Crossing")
+                             (if (>  (latitude (bus-location y)) -71.327028)
+                                (Build_response (bus-id y) (duration  (distance-waypoint (gps->string (bus-location y))  "42.6559767410684,-71.32473349571217" "42.638522,-71.327028"))) ;; Middlesex waypoint
+                               (Build_response (bus-id y) (duration    (distance-waypoint (gps->string (bus-location y))  "42.6559767410684,-71.32473349571217" "42.645632,-71.333838"))))] ;pawtucket waypoint
+                           [(equal? (bus-last_stop y) "North Campus") (Build_response (bus-id y) (duration ((gps->string (bus-location y)) "42.643473,-71.333985" "42.649418,-71.323339|via:42.638522,-71.327028"))) ] ;report back shuttle time
+                           [(equal? (bus-last_stop y) "South - Wilder") '( riverview_almost_there ) ]
                             [else null])))))                                                
 )
     
@@ -140,31 +182,20 @@ dispatch
 
  
 (post "/"
-      (lambda (req) (create_response (requestJSON req))))
+    (λ (req) (write req) (newline) (create_response (requestJSON req))))
 
 
 
-;;--- THIS CODE HERE IS TAKEN FROM SPIN'S EXAMPLE ---
+(define root (path->string (current-directory)))
+(define cert (string-append root "/server-cert.pem"))
+(define key (string-append root "/private-key.pem"))
 
-;(define (json-response-maker status headers body)
-;  (response status
-;            (status->message status)
-;            (current-seconds)
-;            #"application/json;"
-;            headers
-;            (let ([jsexpr-body (string->jsexpr body)])
-;              (lambda (op) (write-json (force jsexpr-body) op)))))
-;
-;(define (json-get path handler)
-;  (define-handler "POST" path handler json-response-maker))
-;
-;(json-post "/json" (lambda (req) 
-;                    "{\"body\":\"JSON GET\"}"))  ;; NEEDS TO BE A STRING
-;
-;;--- END OF SLIGHTLY COPIED CODE 
-
-
-(define runner (thread (λ () (run #:port 8080  #:listen-ip #f))))
+(define runner (thread (λ ()
+ (run  #:port 8080
+     ;  #:ssl? #t
+      ; #:ssl-cert cert
+      ; #:ssl-key  key
+       #:listen-ip #f))))
 
 
 

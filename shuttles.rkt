@@ -106,12 +106,15 @@
     (define (active_lines) ;; gets a list of all the lines with ID Number, Name, and Stops
       (map
        (λ (x)
-         (let
+         (let*
              [(id (hash-ref x 'Id))
-              (name (string-append
+              (name 
+               (if (or (equal? 2 id) (equal? 11 id))
+               "Red "
+               (string-append
                      (hash-ref x 'Name)
                      " "
-                     (hash-ref x 'Qualifier)))]
+                     (hash-ref x 'Qualifier))))]
            
            (set! active_lst (cons (list name id) active_lst))
            (list
