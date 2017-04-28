@@ -46,7 +46,22 @@
   (define red_shuttles (line-shuttles red_line))
   (define red_stops (line-stops red_line))
   
-  (define (East) 0)
+  (define (East)    (if (not (equal? '() (stop_check '(42.65246507383046 -71.32075744907377)  red_shuttles)))
+                        (list currently_at_stop )
+                        (filter-not null? (hash-map red_shuttles (λ (x y) ;; Use map on this list to get a list of distances
+                         (cond  ;; then pick the shortest distance and use that to report back to the user
+                            [(equal? (bus-last_stop y) "South - Broadway St")
+                          ;check to see if the shuttle's gps is to the east of the waypoint, if not then use waypoint
+                              (if (<  (latitude (bus-location y)) -71.327028)
+                               (Build_response (bus-id y)  (duration(distance-waypoint (gps->string (bus-location y)) "42.65246507383046,-71.32075744907377" "42.638522,-71.327028")))
+                                 (Build_response (bus-id y) (duration (distance (gps->string (bus-location y)) "42.65246507383046,-71.32075744907377"))))
+                                 ] ;report back shuttle time
+                             [(equal? (bus-last_stop y) "University Crossing") ;; Need to figure out way to differentiate between East bound/south bound shuttles for this part; Probably reintroduce bearing and check what angle it's facing it won't be perfect but it'll be something.
+                              (Build_response (bus-id y) (duration (distance-waypoint (gps->string (bus-location y)) "42.65246507383046,-71.32075744907377" "42.638522,-71.327028"))) ] ;; use time taken from riverview -> North and report that back
+                             [else null]))
+                        )))
+  
+  )
   (define (South)     
       (if (not (equal? '() (stop_check '(42.643473 -71.333985)  red_shuttles)))
                         (list currently_at_stop )
@@ -54,12 +69,23 @@
                           (cond  ;; then pick the shortest distance and use that to report back to the user
                            [(equal? (bus-last_stop y) "University Crossing")
                              (if (>  (latitude (bus-location y)) -71.327028)
-                              (Build_response (bus-id y)   (distance-waypoint (gps->string (bus-location y))  "42.6559767410684,-71.32473349571217" "42.638522,-71.327028")) ;; Middlesex waypoint
-                              (Build_response (bus-id y) (duration (distance-waypoint (gps->string (bus-location y))  "42.6559767410684,-71.32473349571217" "42.645632,-71.333838"))))] ;pawtucket waypoint
+                              (Build_response (bus-id y)   (distance-waypoint (gps->string (bus-location y))  "42.643473,-71.333985" "42.638522,-71.327028")) ;; Middlesex waypoint
+                              (Build_response (bus-id y) (duration (distance-waypoint (gps->string (bus-location y))  "42.643473,-71.333985" "42.645632,-71.333838"))))] ;pawtucket waypoint
                             [(equal? (bus-last_stop y) "Fox Hall")
-                             (Build_response (bus-id y) (duration (distance-waypoint (gps->string (bus-location y)) "42.65246507383046,-71.32075744907377" "42.649418,-71.323339|via:42.638522,-71.327028"))) ] ;; use time taken from riverview -> North and report that back
+                             (Build_response (bus-id y) (duration (distance-waypoint (gps->string (bus-location y)) "42.643473 -71.333985" "42.649418,-71.323339|via:42.638522,-71.327028"))) ] ;; use time taken from riverview -> North and report that back
                             [else null])))))) 
-  (define (Riverview) 0)
+  (define (Riverview)  (if (not (equal? '() (stop_check '(42.64064028574872 -71.33751713182983) red_shuttles)))
+                        (list currently_at_stop)
+                        (filter-not null? (hash-map red_shuttles (λ (x y) ;; Use map on this list to get a list of distances
+                         (cond  ;; then pick the shortest distance and use that to report back to the user
+                          [(equal? (bus-last_stop y) "University Crossing")
+                             (if (>  (latitude (bus-location y)) -71.327028)
+                                (Build_response (bus-id y) (duration  (distance-waypoint (gps->string (bus-location y))  "42.64064028574872,-71.33751713182983" "42.638522,-71.327028"))) ;; Middlesex waypoint
+                               (Build_response (bus-id y) (duration    (distance-waypoint (gps->string (bus-location y))  "42.64064028574872,-71.33751713182983"  "42.645632,-71.333838"))))] ;pawtucket waypoint
+                           [(equal? (bus-last_stop y) "Fox Hall") (Build_response (bus-id y) (duration ((gps->string (bus-location y)) "42.64064028574872,-71.33751713182983" "42.649418,-71.323339|via:42.638522,-71.327028"))) ] ;report back shuttle time
+                           [(equal? (bus-last_stop y) "South - Wilder") '( riverview_almost_there ) ]
+                            [else null])))))              
+  )
 
  (define (dispatch e)
   (cond
@@ -108,8 +134,6 @@ dispatch )
  "{ \"speech\": \"The shuttle is currently at South, it should be at riverview soon.\" , \"displayText\": \"The shuttle is currently at South, it should be at riverview soon.\", \"data\": {}, \"contextOut\": [], \"source\": \"Google Maps\" }" 
 )
  
-  
-
 (define (Blue_line) ;; 
   (define blue_line (hash-ref blue-test  "Blue "))
   (define blue_shuttles (line-shuttles blue_line))
