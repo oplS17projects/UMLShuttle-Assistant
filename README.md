@@ -49,18 +49,13 @@ The backend involving the parsing of lines (already 99% completed)
 Basic interactivty with at least one shuttle line 
 
 ### Second Milestone (Sun Apr 16)
-The rest of the lines should be completed by this date seeing as they will more or less follow the same patterns/issues of one line. 
-Documentation should be mostly completed
+My partner bailed out, and I didn't really accomplish anything new expecting him to be doing something.
 
 ### Public Presentation (Mon Apr 24, Wed Apr 26, or Fri Apr 28 [your date to be determined later])
-Adding in asking for average time and what time they should leave their current location to get to a stop.
-All documentation completed 
+I got blue line interactity completed with the ability to communicate with the application through the api.ai platform.
 
 ## Group Responsibilities
 
 ### Tavis Sivat @sivat394
 The parsing backend and basic groundwork for api.ai/actions on google intergration 
-
-### Nicholas Puopolo @npuopolo
-Accepting and processing requests from the web server, calculating average time.
 
