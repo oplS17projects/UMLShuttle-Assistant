@@ -206,7 +206,7 @@ dispatch
 
  
 (post "/"
-    (λ (req) (write req) (newline) (create_response (requestJSON req))))
+    (λ (req) (create_response (requestJSON req))))
 
 
 
