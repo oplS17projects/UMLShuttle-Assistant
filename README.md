@@ -168,17 +168,3 @@ The code for getting the time for a shuttle to north campus from south is fairly
                         ))))
 ```
 
-
-
-
-
-### External Technologies
-This project connects to
-
-Actions on Google (Google Asstant)
-API.AI 
-api.uml.edu
-
-
-## Architecture Diagram
-![arch](arch.png)
