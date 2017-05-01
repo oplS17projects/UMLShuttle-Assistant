@@ -48,15 +48,15 @@
       ([routes (make-hash)]
        [active_lst '()])
 
- 
-
     (define (active_shuttles_on line_in)
       (define shuttles (make-hash))
+      (define json_read (json_in line_in))
       (for-each  (λ (x)
                    (hash-set! shuttles
                               (bus-id x) x))   
-                 (foldl create-buses '() (json_in line_in)))
+                 (foldl create-buses '() json_read))
       shuttles)
+
     (define (find_line line_name linelst)
       (filter (λ (x) (equal? (line-name x) line_name)) linelst ))
 
@@ -65,7 +65,7 @@
                     (string->jsexpr line_in)
                     (read-json (get-pure-port line_in))) 'data))
 
-    (define (create-buses shuttle shuttle-list) ;;creates
+    (define (create-buses shuttle shuttle-list) 
       (cons (let [(location (hash-ref shuttle 'Location))
                   (numb (hash-ref shuttle 'Number))]
               (bus 
@@ -191,7 +191,7 @@
         [(equal? e 'get_line) active_lst]
         ))   
     (cond
-      [(equal? routes (make-hash)) (create_lines)  dispatch]
+      [(hash-empty? routes) (create_lines)  dispatch]
       [else dispatch]) ;; this condition creates the lines on initial call and then dispatch so that it can immediatly be used) 
     ))
 

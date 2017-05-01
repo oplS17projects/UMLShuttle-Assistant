@@ -1,20 +1,67 @@
 # UMLShuttle-Assistant
 
-### Statement
-We're creating an Actions on Google module using api.ai to interact with google assistant/home in order to let users figure out how when the next shuttle will be at one of the stops using google maps distance API. This project is especially interesting because it's using brand new technology that has only come to market in the past year and will give us a solid groundwork to create more projects involving this technology in the future. 
+# Overview
+
+Umass lowells shuttle tracking system is nice, but it's missing one thing to be truely useful to students, and that's ability to give an estimate of exactly how long it will take for the next shuttle to arrive at a certain stop. This project was created as a way to give students the ability to figure out exactly that through various platforms that api.ai intergrates with, which as of right now is just api.ai itself and facebook messenger. 
+
+This program starts off by immediatly initiating an parsing object that holds and delivers a hash-table(routes_hash)containing the different lines and an updater in a seperate thread.
+ ```
+ (define routes_hash
+  (let
+      ([routes (make-hash)]
+       [active_lst '()])
+```
+ It does this automatically by checking in the dispatch if routes is empty and then returning the dispatch function  ```[(hash-empty? routes) (create_lines)  dispatch]``` 
+
+The ```(create_lines)``` function uses for-each over a list that's generated from ```(active_lines)``` and it updates the routes hash that's defined above in the let definition.
+It does this by parsing each individual route endpoint for the active shuttles which is a hash of the shuttle name to the shuttle struct using a foldl and function called ```create-buses``` which inititalizes all of the bus structs with the name, id, type, and location. and then passes it to ```active_shuttles_on``` which is set to the correct line in the hash table.
+
+```
+    (define (create_lines) ;; creates a list of lines with all active shuttles and last stop
+      (for-each
+       (λ (x)
+         (let [(shuttlelst (active_shuttles_on (route_url (car x)))) (stoplst (get_stops (car (cddr x))))]
+           (hash-set! routes
+                      (cadr x)
+                      (line
+                       (cadr x) ;; name
+                       (car x) ;; id     
+                       shuttlelst ;; shuttles
+                       stoplst
+                       ) )))
+       (active_lines)))
+
+ (define (active_shuttles_on line_in)
+      (define shuttles (make-hash))
+      (define json_read (json_in line_in))
+      (for-each  (λ (x)
+                   (hash-set! shuttles
+                              (bus-id x) x))   
+                 (foldl create-buses '() json_read))
+      shuttles)
+
+  (define (create-buses shuttle shuttle-list) 
+      (cons (let [(location (hash-ref shuttle 'Location))
+                  (numb (hash-ref shuttle 'Number))]
+              (bus 
+               numb
+               (string-ref numb 0) ; type
+               (list
+                (hash-ref location 'Latitude)
+                (hash-ref location 'Longitude)) ;gps 
+               "nope")) ;;nope is for last stop
+            shuttle-list ))
+
+```
 
 
-### Analysis
-There will be data abstraction to various degrees throughout the entire project. All data is organized and collected in meaningful ways be it with lists, hash-tables, or structs and have proper functions to access them.
 
-The only recursion that has been added in so far is for multithreading the proccess that updates the tables containing the last stop each shuttle was at. 
 
-Map and for-each are used excessively throughout the parsing of the various json objects involved, and filtering is used exclusively for checking to see if shuttles are currently at a stop.
+When creating the routes_hash it uses the route name from the list as the key and the id number gets used to then parses each individual line endpoint for the list of active shuttles 
 
-There is object orientation, the shuttle backend is encapsulated in an entire object and depending on how the rest progresses there might be more.
 
-Seeing as there are objects, there are also state-modification using set! which is how all of the tables containing line/shuttle data are updated.
 
+while generating the 
 
 ### External Technologies
 This project connects to
@@ -23,39 +70,8 @@ Actions on Google (Google Asstant)
 API.AI 
 api.uml.edu
 
-People will access the API for this module by asking Google Assistant how far away a shuttle is from whatever stop they are at. Google Assistant (on their phone) then sends their query to actions on google, which immediately sends it to API.AI which then processes it and sends a request for the data to the racket webserver. The racket webserver (this program) will then query the uml shuttle api's for their locations, query google maps api and then send the response back to API.AI which bounces it back to the end user.
-
-### Data Sets or other Source Materials
-
-All data is collected/taken from various https://www.uml.edu/api/Transportation/RoadsterRoutes/ endpoints 
-
-### Deliverable and Demonstration
-
-By the end of the project and the time of the live demo this program should be able to be interacted with fully to get information about all shuttles from 7am-7pm monday-friday without any issues as well as get average times. All data will be collected/analyzed live. 
-
-
-The live demo for this project will more than likely actually start up the week before the actual event and will just continue running indefinitely and be accessable for anyone with an android phone running marshmellow or nougat with google assitant because the entire point of this project to to help out other students.
-
-### Evaluation of Results
-Ultimately to test the real effectiveness of this project it will have to involve it just being fully running and doing live tests. However, if we can get a test case for at least one shuttle line up and running we can get some early feedback from users and see exactly how useful this is to them and present them during the live demo. 
 
 ## Architecture Diagram
 ![arch](arch.png)
 
 ## Schedule
-
-### First Milestone (Sun Apr 9)
-The backend involving the parsing of lines (already 99% completed)
-Basic interactivty with at least one shuttle line 
-
-### Second Milestone (Sun Apr 16)
-My partner bailed out, and I didn't really accomplish anything new expecting him to be doing something.
-
-### Public Presentation (Mon Apr 24, Wed Apr 26, or Fri Apr 28 [your date to be determined later])
-I got blue line interactity completed with the ability to communicate with the application through the api.ai platform.
-
-## Group Responsibilities
-
-### Tavis Sivat @sivat394
-The parsing backend and basic groundwork for api.ai/actions on google intergration 
-
