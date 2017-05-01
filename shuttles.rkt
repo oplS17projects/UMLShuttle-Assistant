@@ -70,10 +70,10 @@
                   (numb (hash-ref shuttle 'Number))]
               (bus 
                numb
-               (string-ref numb 0)
+               (string-ref numb 0) ; type
                (list
                 (hash-ref location 'Latitude)
-                (hash-ref location 'Longitude))
+                (hash-ref location 'Longitude)) ;gps 
                "nope")) ;;nope is for last stop
             shuttle-list ))
     
@@ -178,7 +178,7 @@
                                          
                                          (update-buses (line-shuttles y) shuttle_update at_stop))))
                                         
-                      (sleep 25) (loop))
+                      (sleep 10) (loop))
                 (loop)))) 
 
     ;; DISPATCHER 

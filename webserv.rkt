@@ -22,7 +22,7 @@
                                 "lol not json"
                                 ))
 
-(define test_query "{\r\n  \"id\": \"036a07cf-fe90-4286-a8f0-0ca784e66d9e\",\r\n  \"timestamp\": \"2017-03-30T01:57:53.935Z\",\r\n  \"lang\": \"en\",\r\n  \"result\": {\r\n    \"source\": \"agent\",\r\n    \"resolvedQuery\": \"How far away is the blue line from south?\",\r\n    \"action\": \"blue_line\",\r\n    \"actionIncomplete\": false,\r\n    \"parameters\": {\r\n      \"destination\": {\r\n        \"line\": \"red_line\",\r\n        \"bus_stops\": \"South\"\r\n      },\r\n      \"time_until\": \"how far away is\"\r\n    },\r\n    \"contexts\": [],\r\n    \"metadata\": {\r\n      \"intentId\": \"4c2adb65-e68f-4915-92be-549a5693fc43\",\r\n      \"webhookUsed\": \"false\",\r\n      \"webhookForSlotFillingUsed\": \"false\",\r\n      \"intentName\": \"Blue Line\"\r\n    },\r\n    \"fulfillment\": {\r\n      \"speech\": \"You are from north.\",\r\n      \"messages\": [\r\n        {\r\n          \"type\": 0,\r\n          \"speech\": \"You are from north.\"\r\n        }\r\n      ]\r\n    },\r\n    \"score\": 1\r\n  },\r\n  \"status\": {\r\n    \"code\": 200,\r\n    \"errorType\": \"success\"\r\n  },\r\n  \"sessionId\": \"ef2685f9-3a53-46d0-9952-c74a5f1c34ce\"\r\n}")
+(define test_query "{\r\n  \"id\": \"036a07cf-fe90-4286-a8f0-0ca784e66d9e\",\r\n  \"timestamp\": \"2017-03-30T01:57:53.935Z\",\r\n  \"lang\": \"en\",\r\n  \"result\": {\r\n    \"source\": \"agent\",\r\n    \"resolvedQuery\": \"How far away is the blue line from south?\",\r\n    \"action\": \"blue_line\",\r\n    \"actionIncomplete\": false,\r\n    \"parameters\": {\r\n      \"destination\": {\r\n        \"line\": \"blue_line\",\r\n        \"bus_stops\": \"South\"\r\n      },\r\n      \"time_until\": \"how far away is\"\r\n    },\r\n    \"contexts\": [],\r\n    \"metadata\": {\r\n      \"intentId\": \"4c2adb65-e68f-4915-92be-549a5693fc43\",\r\n      \"webhookUsed\": \"false\",\r\n      \"webhookForSlotFillingUsed\": \"false\",\r\n      \"intentName\": \"Blue Line\"\r\n    },\r\n    \"fulfillment\": {\r\n      \"speech\": \"You are from north.\",\r\n      \"messages\": [\r\n        {\r\n          \"type\": 0,\r\n          \"speech\": \"You are from north.\"\r\n        }\r\n      ]\r\n    },\r\n    \"score\": 1\r\n  },\r\n  \"status\": {\r\n    \"code\": 200,\r\n    \"errorType\": \"success\"\r\n  },\r\n  \"sessionId\": \"ef2685f9-3a53-46d0-9952-c74a5f1c34ce\"\r\n}")
 
 (define (create_response request_string)
    (define query_input (parse_query request_string))
@@ -169,7 +169,7 @@ dispatch )
                              (if (>  (latitude (bus-location y)) -71.327028)
                                 (Build_response (bus-id y) (duration (distance-waypoint (gps->string (bus-location y))  "42.6559767410684,-71.32473349571217" "42.638522,-71.327028"))) ;; Middlesex waypoint
                                   (Build_response (bus-id y) (duration (distance-waypoint (gps->string (bus-location y))  "42.6559767410684,-71.32473349571217" "42.645632,-71.333838"))))] ;pawtucket waypoint
-                            [(equal? (bus-last_stop y) "North Campus") (duration (distance-waypoint (Build_response (bus-id y) (gps->string (bus-location y)) "42.643473,-71.333985" "42.649418,-71.323339|via:42.638522,-71.327028")) )] ;; use time taken from riverview -> North and report that back
+                            [(equal? (bus-last_stop y) "North Campus")  (Build_response (bus-id y) (duration (distance-waypoint (gps->string (bus-location y)) "42.643473,-71.333985" "42.649418,-71.323339|via:42.638522,-71.327028")) )] ;; use time taken from riverview -> North and report that back
                             [else null])))))) 
 
 (define (Riverview) (if (not (equal? '() (stop_check '(42.64064028574872 -71.33751713182983) blue_shuttles)))
@@ -179,8 +179,8 @@ dispatch )
                           [(equal? (bus-last_stop y) "University Crossing")
                              (if (>  (latitude (bus-location y)) -71.327028)
                                 (Build_response (bus-id y) (duration  (distance-waypoint (gps->string (bus-location y))  "42.6559767410684,-71.32473349571217" "42.638522,-71.327028"))) ;; Middlesex waypoint
-                               (Build_response (bus-id y) (duration    (distance-waypoint (gps->string (bus-location y))  "42.6559767410684,-71.32473349571217" "42.645632,-71.333838"))))] ;pawtucket waypoint
-                           [(equal? (bus-last_stop y) "North Campus") (Build_response (bus-id y) (duration ((gps->string (bus-location y)) "42.643473,-71.333985" "42.649418,-71.323339|via:42.638522,-71.327028"))) ] ;report back shuttle time
+                               (Build_response (bus-id y) (duration (distance-waypoint (gps->string (bus-location y))  "42.6559767410684,-71.32473349571217" "42.645632,-71.333838"))))] ;pawtucket waypoint
+                           [(equal? (bus-last_stop y) "North Campus") (Build_response (bus-id y)  (duration (distance-waypoint ((gps->string (bus-location y)) "42.643473,-71.333985" "42.649418,-71.323339|via:42.638522,-71.327028")))) ] ;report back shuttle time
                            [(equal? (bus-last_stop y) "South - Wilder") '( riverview_almost_there ) ]
                             [else null])))))                                                
 )
