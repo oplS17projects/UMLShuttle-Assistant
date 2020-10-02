@@ -1,6 +1,6 @@
 # UML Shuttle Assistant 
 
-## Victor Borcherds (Tavis Sivat) 
+## (Tavis Sivat) 
 ### April 30, 2017
 
 # Overview
